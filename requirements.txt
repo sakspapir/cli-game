@@ -1,0 +1,7 @@
+prompt_toolkit==3.0.39
+colorama==0.4.6
+Pillow==10.4.0
+term-image==0.7.2
+windows-curses
+pygame
+pyautogui
