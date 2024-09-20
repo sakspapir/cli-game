@@ -1,4 +1,5 @@
 def show_instructions():
+    print("")
     print("Welcome to the Adventure Game!")
     print("Commands: go [direction], get [item]")
 
