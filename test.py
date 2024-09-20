@@ -19,8 +19,10 @@ class Item:
     def use(self, target):
         if target in self.usable_on:
             print(f"You used {self.name} on {target.name}.")
+            return True
         else:
             print(f"{self.name} cannot be used on {target.name}.")
+            return False
 
 
 class Object:
@@ -131,7 +133,6 @@ dining_room.add_item(potion)
 garden.add_human(alice)
 
 # Define room connections
-# Define room connections
 rooms = {
     'Hall': hall,
     'Kitchen': kitchen,
@@ -144,6 +145,37 @@ kitchen.connections = {'north': hall}
 dining_room.connections = {'west': hall, 'south': garden}
 garden.connections = {'north': dining_room}
 
+# Define game states and transitions
+game_states = {
+    'start': {
+        'description': 'You are at the start of your adventure.',
+        'transitions': {
+            ('use', 'key', 'door'): ('opened_door', lambda: print("The door is now open!"))
+        }
+    },
+    'opened_door': {
+        'description': 'The door is open. You can now proceed.',
+        'transitions': {}
+    }
+}
+
+current_state = 'start'
+
+def update_game_state(action, item_name=None, target_name=None):
+    global current_state
+
+    state_info = game_states[current_state]
+    
+    transition_key = (action, item_name, target_name)
+    
+    if transition_key in state_info['transitions']:
+        new_state, transition_action = state_info['transitions'][transition_key]
+        
+        current_state = new_state
+        
+        # Call the transition action function
+        transition_action()
+        
 # Start the player in the Hall
 current_room = hall
 inventory = []
@@ -161,6 +193,7 @@ while True:
     if move[0] == 'go':
         if move[1] in current_room.connections:
             current_room = current_room.connections[move[1]]
+            update_game_state('go', target_name=current_room.name)
         else:
             print("You can't go that way!")
     
@@ -171,6 +204,7 @@ while True:
                 inventory.append(item)
                 print(f"{item.name} got!")
                 current_room.items.remove(item)
+                update_game_state('get', item_name=item.name)
                 break
         else:
             print(f"Can't get {move[1]}!")
@@ -179,6 +213,7 @@ while True:
     elif move[0] == 'look':
         if len(move) == 1:
             current_room.look()
+            update_game_state('look')
         elif len(move) > 1 and move[1] == 'at':
             current_room.look_at(' '.join(move[2:]))
     
@@ -193,7 +228,8 @@ while True:
                 # Find the target (item or object) in the current room or inventory
                 for target in current_room.items + current_room.objects + inventory:
                     if target_name == target.name or target_name in target.aliases:
-                        item.use(target)
+                        if item.use(target):
+                            update_game_state('use', item_name=item.name, target_name=target.name)
                         break
                 else:
                     print(f"There is no {target_name} here.")
