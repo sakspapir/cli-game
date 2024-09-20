@@ -3,6 +3,7 @@ class Item:
         self.name = name
         self.description = description
         self.aliases = aliases if aliases else []
+        self.usable_on = []
 
     def __str__(self):
         return f"{self.name}: {self.description}"
@@ -10,6 +11,16 @@ class Item:
     def add_alias(self, alias):
         if alias not in self.aliases:
             self.aliases.append(alias)
+
+    def add_usable_on(self, target):
+        if target not in self.usable_on:
+            self.usable_on.append(target)
+
+    def use(self, target):
+        if target in self.usable_on:
+            print(f"You used {self.name} on {target.name}.")
+        else:
+            print(f"{self.name} cannot be used on {target.name}.")
 
 
 class Object:
@@ -85,7 +96,7 @@ class Room:
 def show_instructions():
     print("")
     print("Welcome to the Adventure Game!")
-    print("Commands: go [direction], get [item], look, look at [name]")
+    print("Commands: go [direction], get [item], look, look at [name], use [item] on [target]")
 
 
 def show_status():
@@ -119,6 +130,7 @@ kitchen.add_object(stove)
 dining_room.add_item(potion)
 garden.add_human(alice)
 
+# Define room connections
 # Define room connections
 rooms = {
     'Hall': hall,
@@ -169,6 +181,25 @@ while True:
             current_room.look()
         elif len(move) > 1 and move[1] == 'at':
             current_room.look_at(' '.join(move[2:]))
+    
+    # If they type 'use'
+    elif move[0] == 'use':
+        item_name = move[1]
+        target_name = ' '.join(move[3:])
+        
+        # Find the item in the inventory
+        for item in inventory:
+            if item_name == item.name or item_name in item.aliases:
+                # Find the target (item or object) in the current room or inventory
+                for target in current_room.items + current_room.objects + inventory:
+                    if target_name == target.name or target_name in target.aliases:
+                        item.use(target)
+                        break
+                else:
+                    print(f"There is no {target_name} here.")
+                break
+        else:
+            print(f"You don't have {item_name}.")
     
     # Check if the player has encountered the monster
     if any(item.name == 'Monster' for item in current_room.items):
